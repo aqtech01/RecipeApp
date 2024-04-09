@@ -3,24 +3,29 @@ from .models import *
 # Create your views here.
 
 def recipes(request):
-    try:
-        if request.method == 'POST':
+    if request.method == 'POST':
+        try:
             recipe_name = request.POST.get("recipe_name")
             recipe_desc = request.POST.get("recipe_desc")
             recipe_image = request.FILES.get("recipe_image")
-            data = Recipe.objects.create(recipe_name=recipe_name,recipe_desc=recipe_desc,recipe_image=recipe_image)
-            data.save()
+            Recipe.objects.create(recipe_name=recipe_name, recipe_desc=recipe_desc, recipe_image=recipe_image)
             return redirect('/')
-    except:
-        pass
-    quesryset= Recipe.objects.all()
+        except (ValueError, TypeError) as e:
+            # Handle specific exceptions if needed
+            print(e)  # Log the error or handle it appropriately
+
+    queryset = Recipe.objects.all()
+
+    search_query = request.GET.get("search")
+    if search_query:
+        queryset = queryset.filter(recipe_name__icontains=search_query).distinct()
+
     context = {
-        'title':"Recipe",
-        'data':quesryset
+        'title': "Recipe",
+        'data': queryset
     }
 
-    return render(request,"core/index.html",context)
-
+    return render(request, "core/index.html", context)
 def delete_recipe(request,id):
     data = Recipe.objects.get(id=id)
     data.delete()
